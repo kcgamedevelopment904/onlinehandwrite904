@@ -135,13 +135,15 @@
         </div>
     </div>
 
-    <script>
+<script>
         const canvas = document.getElementById('drawCanvas');
         const ctx = canvas.getContext('2d');
         const textOutput = document.getElementById('textOutput');
         const charCandidates = document.getElementById('charCandidates');
         const phraseCandidates = document.getElementById('phraseCandidates');
         const statusIndicator = document.getElementById('statusIndicator');
+        let recognitionRequestId = 0;
+        const currentTraceColor = '#e91e63';
 
         let isDrawing = false;
         let traces = [];
@@ -181,11 +183,11 @@
             redraw();
         }
 
-        function setupCanvasStyle() {
+        function setupCanvasStyle(color = '#e91e63') {
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.lineWidth = 8;
-            ctx.strokeStyle = '#e91e63'; // 專業朱紅色
+            ctx.strokeStyle = color;
         }
 
         window.addEventListener('resize', resizeCanvas);
@@ -212,8 +214,13 @@
             isDrawing = true;
             const pos = getPointerPos(e);
             currentTrace = [[pos.x, pos.y]];
-            
-            setupCanvasStyle();
+            // 固定朱紅色筆跡；不再自動變色。
+            setupCanvasStyle('#e91e63');
+            // 單點也畫成圓點，避免點一下沒有任何可見筆跡。
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, ctx.lineWidth / 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#e91e63';
+            ctx.fill();
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
             if (fetchTimeout) clearTimeout(fetchTimeout);
@@ -249,7 +256,7 @@
             }
             
             if (fetchTimeout) clearTimeout(fetchTimeout);
-            statusIndicator.textContent = '⚡ 光速辨識中...';
+            statusIndicator.textContent = 'Google 手寫辨識中...';
             statusIndicator.className = 'absolute bottom-2 left-2 text-xs text-blue-600 font-bold bg-white/90 px-2 py-0.5 rounded shadow pointer-events-none transition-colors duration-200';
             
             // 延遲降低為 300 毫秒，符合正常書寫節奏
@@ -271,6 +278,7 @@
             setupCanvasStyle();
             traces.forEach(trace => {
                 if (!trace || trace.length === 0) return;
+                setupCanvasStyle('#e91e63');
                 ctx.beginPath();
                 ctx.moveTo(trace[0][0], trace[0][1]);
                 for (let i = 1; i < trace.length; i++) {
@@ -289,7 +297,9 @@
                     x.push(Math.round(trace[i][0]));
                     y.push(Math.round(trace[i][1]));
                 }
-                return [x, y];
+                // Google Input Tools 的 ink 每筆格式為 [x座標陣列, y座標陣列, 壓力/時間陣列]；
+                // 沒有壓力或時間資料時，第三個元素仍需存在，使用空陣列。
+                return [x, y, []];
             });
         }
 
@@ -307,75 +317,32 @@
             return [...new Set(candidates)];
         }
 
-        // ==========================================
-        // 核心升級：Gemini 3 Flash 極速視覺辨識引擎
-        // ==========================================
-        async function recognizeViaGeminiAI() {
-            return new Promise((resolve, reject) => {
-                try {
-                    // 1. 將畫布縮小繪製到超小記憶體 Canvas 中 (縮小圖片體積以極速發送)
-                    const tempCanvas = document.createElement('canvas');
-                    const scale = Math.min(200 / canvas.width, 200 / canvas.height);
-                    tempCanvas.width = canvas.width * scale;
-                    tempCanvas.height = canvas.height * scale;
-                    const tempCtx = tempCanvas.getContext('2d');
-                    
-                    // 白底襯托紅字，利於 AI 極速判讀
-                    tempCtx.fillStyle = '#ffffff';
-                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                    tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-
-                    // 轉換成超高壓縮比的 JPEG Base64
-                    const base64Image = tempCanvas.toDataURL('image/jpeg', 0.6).split(',')[1];
-                    if (!base64Image) { reject('Image error'); return; }
-
-                    const apiKey = ""; // 使用空字串，Canvas 運行環境會自動帶入驗證憑證
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-
-                    const prompt = "你是極速手寫中文字辨識專家。請精準辨識這張圖片中的手寫中文字。只需輸出 5 到 8 個最可能的繁體與簡體候選字，用半角逗號分隔（例如：的,得,地,迪）。不要有任何其他文字、引號或標點。";
-
-                    const payload = {
-                        contents: [{
-                            role: "user",
-                            parts: [
-                                { text: prompt },
-                                {
-                                    inlineData: {
-                                        mimeType: "image/jpeg",
-                                        data: base64Image
-                                    }
-                                }
-                            ]
-                        }],
-                        generationConfig: {
-                            temperature: 0.1, // 低隨機性提升準確度
-                            maxOutputTokens: 30
-                        }
-                    };
-
-                    fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+        // Google 手寫輸入工具（非 Gemini；此為 Google 網站使用的非公開介面，可能因服務端政策變更）
+        async function recognizeFallbackEngines() {
+            const errors = [];
+            const tasks = [
+                recognizeViaPOST().then(results => {
+                    if (!results || results.length === 0) throw new Error('POST 通道沒有候選字');
+                    return results;
+                }).catch(error => { errors.push('POST：' + (error?.message || error)); throw error; }),
+                recognizeViaJSONP().then(results => {
+                    if (!results || results.length === 0) throw new Error('JSONP 通道沒有候選字');
+                    return results;
+                }).catch(error => { errors.push('JSONP：' + (error?.message || error)); throw error; })
+            ];
+            let timeoutId;
+            try {
+                return await Promise.race([
+                    Promise.any(tasks).catch(() => {
+                        throw new Error(errors.length ? errors.join('；') : '所有辨識通道都沒有回傳候選字');
+                    }),
+                    new Promise((_, reject) => {
+                        timeoutId = setTimeout(() => reject(new Error('辨識逾時。請確認網絡可連線至 Google，並以 Chrome 或 Edge 開啟。')), 8000);
                     })
-                    .then(res => res.json())
-                    .then(data => {
-                        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (text) {
-                            // 提取 AI 回傳的所有中文字元
-                            const matched = text.match(/[\u4e00-\u9fa5A-Za-z0-9]/g);
-                            if (matched && matched.length > 0) {
-                                resolve([...new Set(matched)]);
-                                return;
-                            }
-                        }
-                        reject("AI 無文字回傳");
-                    })
-                    .catch(err => reject(err));
-                } catch (e) {
-                    reject(e);
-                }
-            });
+                ]);
+            } finally {
+                if (timeoutId) clearTimeout(timeoutId);
+            }
         }
 
         async function recognizeStrokes() {
@@ -384,30 +351,24 @@
                 return;
             }
 
-            statusIndicator.textContent = '⚡ Gemini AI 閃電辨識中...';
-            statusIndicator.className = 'absolute bottom-2 left-2 text-xs text-purple-700 font-bold bg-white/90 px-2 py-0.5 rounded shadow pointer-events-none transition-colors duration-200';
+            const requestId = ++recognitionRequestId;
+            statusIndicator.textContent = 'Google 手寫引擎辨識中...';
+            statusIndicator.className = 'absolute bottom-2 left-2 max-w-[85%] text-xs text-blue-700 font-bold bg-white/90 px-2 py-1 rounded shadow pointer-events-none transition-colors duration-200';
 
-            let resolved = false;
-
-            const handleSuccess = (results, sourceName) => {
-                if (resolved || !results || results.length === 0) return;
-                resolved = true;
+            try {
+                const results = await recognizeFallbackEngines();
+                if (requestId !== recognitionRequestId) return;
+                if (!results || results.length === 0) throw new Error('沒有候選字，請再寫一次或把字寫大一點。');
                 handleSuccessfulResults(results);
-                statusIndicator.textContent = `⚡ 辨識完成 (${sourceName})`;
-                statusIndicator.className = 'absolute bottom-2 left-2 text-xs text-green-600 font-bold bg-white/90 px-2 py-0.5 rounded shadow pointer-events-none transition-colors duration-200';
-            };
-
-            // 雙通道同時併發：Gemini AI 視覺辨識 vs 標準筆劃通道
-            Promise.allSettled([
-                recognizeViaGeminiAI().then(res => handleSuccess(res, 'Gemini AI')),
-                recognizeViaPOST().then(res => handleSuccess(res, 'Cloud Engine')),
-                recognizeViaJSONP().then(res => handleSuccess(res, 'Fast Engine'))
-            ]).then(() => {
-                if (!resolved) {
-                    statusIndicator.textContent = '請重新書寫';
-                    statusIndicator.className = 'absolute bottom-2 left-2 text-xs text-red-500 font-bold bg-white/90 px-2 py-0.5 rounded shadow pointer-events-none transition-colors duration-200';
-                }
-            });
+                statusIndicator.textContent = '辨識完成（Google 手寫引擎）';
+                statusIndicator.className = 'absolute bottom-2 left-2 max-w-[85%] text-xs text-green-700 font-bold bg-white/90 px-2 py-1 rounded shadow pointer-events-none transition-colors duration-200';
+            } catch (error) {
+                if (requestId !== recognitionRequestId) return;
+                const message = String(error?.message || error || '辨識失敗');
+                statusIndicator.textContent = ('辨識失敗：' + message + '。若持續失敗，可能是 Google 介面暫停服務或目前網絡阻擋。').slice(0, 190);
+                statusIndicator.title = statusIndicator.textContent;
+                statusIndicator.className = 'absolute bottom-2 left-2 max-w-[85%] text-xs text-red-600 font-bold bg-white/95 px-2 py-1 rounded shadow pointer-events-none transition-colors duration-200';
+            }
         }
 
         function handleSuccessfulResults(results) {
@@ -429,14 +390,20 @@
                         }]
                     };
 
-                    const response = await fetch('https://inputtools.google.com/request?itc=zh-TW-t-i0-handwrit&app=demopage', {
+                    // 用 Google Input Tools 的 handwriting 路徑提交筆跡；text/plain 可避免不必要的 CORS preflight，
+                    // 但瀏覽器仍會依服務端 CORS 政策決定是否允許讀取回應。
+                    payload.requests[0].language = 'zh';
+                    const response = await fetch('https://inputtools.google.com/request?ime=handwriting&app=translate', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'text/plain' }, // 使用 text/plain 完美繞過 CORS 阻擋
-                        body: JSON.stringify(payload)
+                        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                        body: JSON.stringify(payload),
+                        cache: 'no-store'
                     });
-                    
+                    if (!response.ok) throw new Error('Google 服務回應 HTTP ' + response.status);
                     const data = await response.json();
-                    resolve(extractCandidates(data));
+                    const results = extractCandidates(data);
+                    if (!results.length) throw new Error('Google 服務未回傳候選字');
+                    resolve(results);
                 } catch (error) {
                     reject(error);
                 }
@@ -461,13 +428,15 @@
                 let resolved = false;
 
                 const timer = setTimeout(() => {
-                    if (!resolved) { cleanup(); reject('Timeout'); }
+                    if (!resolved) { cleanup(); reject(new Error('JSONP 請求逾時')); }
                 }, 2500);
 
                 window[cbName] = function(data) {
                     resolved = true;
                     cleanup();
-                    resolve(extractCandidates(data));
+                    const candidates = extractCandidates(data);
+                    if (!candidates.length) { reject(new Error('JSONP 回應沒有候選字')); return; }
+                    resolve(candidates);
                 };
 
                 function cleanup() {
@@ -476,7 +445,7 @@
                     if (script.parentNode) script.parentNode.removeChild(script);
                 }
 
-                script.onerror = () => { cleanup(); reject('Network error'); };
+                script.onerror = () => { cleanup(); reject(new Error('JSONP 網絡請求失敗（可能被網絡、防火牆或瀏覽器擴充功能阻擋）')); };
                 script.src = `https://inputtools.google.com/request?itc=zh-TW-t-i0-handwrit&app=demopage&response=jsonp&cb=${cbName}&data=${encodeURIComponent(JSON.stringify(requestPayload))}`;
                 document.body.appendChild(script);
             });
@@ -591,6 +560,7 @@
         }
 
         function clearCanvas() {
+            recognitionRequestId++;
             traces = [];
             currentTrace = [];
             ctx.clearRect(0, 0, canvas.width, canvas.height);
