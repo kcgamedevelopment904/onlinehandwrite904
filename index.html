@@ -1,214 +1,144 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant" class="h-full select-none">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>網上手寫輸入法 KC904</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
+    <title>終極神級手寫輸入法 KC904 Pro</title>
+    <script src="https://tailwindcss.com"></script>
+    <script src="https://jsdelivr.net"></script>
     <style>
-        body {
-            background-color: #262a33; 
-            font-family: "Microsoft JhengHei", "PingFang HK", "Noto Sans TC", sans-serif;
-            touch-action: none;
-            overflow: hidden;
-        }
-
-        .retro-header-bg {
-            background: linear-gradient(to bottom, #4a5363 0%, #333b47 40%, #2b323c 100%);
-            border-top: 1px solid #6c7787;
-            border-bottom: 2px solid #1a1e24;
-        }
-
-        .font-calligraphy {
-            font-family: 'Brush Script MT', 'Lucida Handwriting', 'Snell Roundhand', cursive;
-            color: #f6d365;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
-        }
-
-        .btn-metallic {
-            background: linear-gradient(to bottom, #fdfdfd 0%, #e0e0e0 40%, #cccccc 100%);
-            border: 1px solid #888;
-            border-top: 1px solid #fff;
-            border-left: 1px solid #fff;
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 2px rgba(0,0,0,0.1);
-            color: #222;
-            font-weight: bold;
-            transition: all 0.1s;
-        }
-        .btn-metallic:active {
-            background: linear-gradient(to bottom, #bbb 0%, #d4d4d4 60%, #eee 100%);
-            border-top: 1px solid #555;
-            border-left: 1px solid #555;
-            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.4);
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f0f0f0; border-left: 1px solid #ccc; }
-        ::-webkit-scrollbar-thumb { background: #a0a0a0; border-radius: 3px; }
-
-        .canvas-container {
-            background-color: #eef2f7;
-            background-image: 
-                linear-gradient(#d5dce6 1px, transparent 1px),
-                linear-gradient(90deg, #d5dce6 1px, transparent 1px);
-            background-size: 50% 50%;
-            background-position: center center;
-        }
-        
-        .char-item:hover, .phrase-item:hover {
-            background-color: #c9d6e6;
-        }
-
-        .char-item:active, .phrase-item:active {
-            background-color: #b0c2de;
-        }
-
-        #textOutput {
-            background-image: repeating-linear-gradient(transparent, transparent 31px, #e2e8f0 31px, #e2e8f0 32px);
-            line-height: 32px;
-            background-attachment: local;
-        }
+        body { background-color: #1e222b; font-family: "Helvetica Neue", "Microsoft JhengHei", "PingFang HK", "Noto Sans TC", sans-serif; touch-action: none; overflow: hidden; }
+        .premium-header-bg { background: linear-gradient(135deg, #2e3743 0%, #1c212a 100%); border-bottom: 2px solid #0f131a; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .font-logo { font-family: 'Kaiti', 'STKaiti', 'Noto Serif TC', serif; background: linear-gradient(120deg, #f6d365 0%, #fda085 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn-premium { background: linear-gradient(to bottom, #ffffff 0%, #eaeaea 50%, #d1d1d4 100%); border: 1px solid #7c8494; box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 1px 1px #fff; color: #1e222b; font-weight: 600; transition: all 0.15s ease; }
+        .btn-premium:active { background: linear-gradient(to bottom, #b8b8bc 0%, #d1d1d4 100%); box-shadow: inset 0 3px 6px rgba(0,0,0,0.3); transform: translateY(1px); }
+        .canvas-grid { background-color: #f7fafc; position: relative; }
+        .canvas-grid::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; background-image: linear-gradient(rgba(203, 213, 224, 0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(203, 213, 224, 0.4) 1px, transparent 1px), linear-gradient(45deg, transparent 49.5%, rgba(226, 232, 240, 0.3) 49.5%, rgba(226, 232, 240, 0.3) 50.5%, transparent 50.5%), linear-gradient(-45deg, transparent 49.5%, rgba(226, 232, 240, 0.3) 49.5%, rgba(226, 232, 240, 0.3) 50.5%, transparent 50.5%); background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%; background-position: center; }
+        .candidate-item { transition: all 0.1s ease; border-bottom: 1px solid rgba(226, 232, 240, 0.8); }
+        .candidate-item:hover { background-color: #ebf4ff; color: #2b6cb0; }
+        .candidate-item:active { background-color: #bee3f8; }
+        #textOutput { background-image: repeating-linear-gradient(transparent, transparent 39px, #edf2f7 39px, #edf2f7 40px); line-height: 40px; background-attachment: local; }
     </style>
 </head>
-<body class="flex items-center justify-center p-2 h-full w-full">
-
-    <div class="w-full max-w-4xl bg-[#3b4252] rounded-xl shadow-2xl overflow-hidden flex flex-col border border-gray-600 ring-4 ring-[#2a303c] h-[95vh] max-h-[750px]">
-        
-        <!-- Header -->
-        <div class="retro-header-bg h-20 flex items-center justify-between px-6 relative shrink-0">
-            <div class="flex items-center space-x-3 w-full select-none">
-                <span class="text-white text-xs tracking-widest font-semibold mt-2 opacity-90 hidden sm:inline">ONLINE HANDWRITING</span>
-                <span class="text-white text-lg tracking-widest mt-2 hidden sm:inline">網上</span>
-                <span class="text-white text-5xl font-serif italic tracking-widest" style="font-family: 'Kaiti', 'STKaiti', serif; text-shadow: 2px 2px 4px #000;">手寫</span>
-                <span class="text-white text-lg tracking-widest mt-2">輸入法</span>
+<body class="flex items-center justify-center p-3 h-full w-full">
+    <div class="w-full max-w-5xl bg-[#2e3440] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-[#434c5e] h-[96vh] max-h-[850px]">
+        <div class="premium-header-bg h-20 flex items-center justify-between px-6 shrink-0 z-10">
+            <div class="flex items-center space-x-3 w-full">
+                <div class="bg-gradient-to-br from-amber-400 to-orange-500 w-3 h-3 rounded-full animate-pulse"></div>
+                <span class="text-gray-400 text-xs tracking-widest font-mono font-bold hidden md:inline">ADVANCED ENGINE</span>
+                <span class="text-white text-xl tracking-wider font-light hidden sm:inline">網上</span>
+                <span class="text-4xl font-bold tracking-widest font-logo">手寫辨識系統</span>
+                <span class="text-gray-400 text-sm font-mono ml-2 hidden sm:inline">v4.0 Pro</span>
             </div>
-            <div class="absolute top-2 right-4 text-3xl font-calligraphy tracking-wider select-none">KC904</div>
+            <div class="text-right shrink-0 select-none">
+                <span class="text-xs block text-gray-500 font-mono">STATION ID</span>
+                <span class="text-xl font-bold text-amber-400 font-mono tracking-wider">KC-904</span>
+            </div>
         </div>
-
-        <!-- Content -->
-        <div class="bg-[#d7dde3] p-2 flex-grow flex flex-col min-h-0">
-            
-            <textarea id="textOutput" class="w-full h-24 p-3 text-2xl rounded bg-white border border-gray-400 shadow-inner focus:outline-none resize-none mb-2 text-gray-800 font-serif" placeholder="請在此處手寫繪畫..."></textarea>
-            
-            <div class="flex flex-row flex-grow bg-white border border-gray-400 shadow-sm min-h-0 overflow-hidden rounded">
-                
-                <!-- Drawing Canvas -->
-                <div class="flex-grow relative canvas-container h-full" id="canvasWrapper">
-                    <canvas id="drawCanvas" class="w-full h-full cursor-crosshair absolute top-0 left-0"></canvas>
-                    <div id="statusIndicator" class="absolute bottom-2 left-2 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded shadow pointer-events-none transition-colors duration-200">
-                        準備手寫...
+        <div class="bg-[#d8dee9] p-3 flex-grow flex flex-col min-h-0 gap-3">
+            <textarea id="textOutput" class="w-full h-28 p-4 text-3xl rounded-xl bg-white border border-gray-300 shadow-inner focus:outline-none resize-none text-gray-800 font-medium tracking-wide" placeholder="請在此處隨意書寫、塗鴉或作畫..."></textarea>
+            <div class="flex flex-row flex-grow bg-white border border-gray-300 shadow-lg min-h-0 overflow-hidden rounded-xl relative">
+                <div class="flex-grow relative canvas-grid h-full" id="canvasWrapper">
+                    <canvas id="drawCanvas" class="w-full h-full cursor-crosshair absolute top-0 left-0 z-0"></canvas>
+                    <div id="statusIndicator" class="absolute bottom-3 left-3 text-xs font-semibold text-gray-600 bg-white/90 border border-gray-200 px-3 py-1 rounded-full shadow-md pointer-events-none transition-all duration-300 flex items-center gap-1.5 z-10">
+                        <span class="w-2 h-2 rounded-full bg-gray-400 inline-block" id="statusDot"></span>
+                        <span id="statusText">系統就緒，請落筆</span>
                     </div>
                 </div>
-
-                <!-- Candidates -->
-                <div class="w-[280px] shrink-0 flex flex-row border-l border-gray-400 bg-white h-full">
-                    <div id="charCandidates" class="w-16 border-r border-gray-300 bg-[#f4f7f9] overflow-y-auto flex flex-col text-2xl items-center py-1 text-gray-800 font-serif shrink-0"></div>
-                    <div id="phraseCandidates" class="flex-grow overflow-y-auto flex flex-col text-lg font-serif py-1 bg-white text-gray-800"></div>
+                <div class="w-24 shrink-0 border-l border-gray-300 bg-[#f8fafc] h-full flex flex-col overflow-hidden z-10">
+                    <div class="bg-[#4c566a] text-white text-xs text-center py-1.5 font-bold tracking-wider select-none shrink-0 shadow-sm">候選字</div>
+                    <div id="charCandidates" class="flex-grow overflow-y-auto flex flex-col text-3xl text-gray-900 font-serif items-center"></div>
                 </div>
-
-                <!-- Punctuation -->
-                <div class="w-10 bg-[#e1e6eb] border-l border-gray-400 flex flex-col items-center text-lg font-serif py-1 shrink-0 overflow-y-auto select-none">
-                    <div class="bg-[#444c5a] text-white rounded text-xs px-1 py-[2px] mb-1 shadow-sm font-sans">寫</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">,</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">。</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">、</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">?</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">!</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">:</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">;</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">「</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">」</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">—</div>
-                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1">+</div>
+                <div class="w-40 shrink-0 border-l border-gray-300 bg-white h-full flex flex-col overflow-hidden z-10 hidden sm:flex">
+                    <div class="bg-[#5e81ac] text-white text-xs text-center py-1.5 font-bold tracking-wider select-none shrink-0 shadow-sm">智慧聯想詞</div>
+                    <div id="phraseCandidates" class="flex-grow overflow-y-auto flex flex-col text-lg font-sans text-gray-800 p-1 gap-1"></div>
+                </div>
+                <div class="w-11 bg-[#e5e9f0] border-l border-gray-300 flex flex-col items-center text-xl font-bold py-1 shrink-0 overflow-y-auto select-none z-10 gap-0.5">
+                    <div class="bg-[#434c5e] text-white rounded-md text-[10px] px-1 py-0.5 mb-1 shadow-sm font-sans font-normal shrink-0">標點</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">，</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">。</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">、</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">？</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">！</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">：</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">；</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">「</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">」</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">『</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">』</div>
+                    <div class="punct-btn cursor-pointer hover:bg-gray-300 w-full text-center py-1.5 rounded transition-colors text-gray-700">—</div>
                 </div>
             </div>
-
-            <!-- Buttons -->
-            <div class="flex flex-row h-12 mt-2 gap-1 shrink-0">
-                <button id="btnUndo" class="flex-1 btn-metallic rounded-l-md text-2xl font-bold" title="復原上一筆">↺</button>
-                <button id="btnClear" class="flex-1 btn-metallic text-xl font-bold" title="清空畫布">X</button>
-                <button id="btnBackspace" class="flex-1 btn-metallic text-xl font-bold" title="退格刪除字元">⌫</button>
-                <button id="btnToggleSimp" class="flex-1 btn-metallic text-xl tracking-widest font-bold">轉簡</button>
-                <button id="btnCopy" class="flex-1 btn-metallic rounded-r-md text-xl tracking-widest font-bold" title="複製所有文字">複製</button>
+            <div class="flex flex-row h-14 gap-2 shrink-0">
+                <button id="btnUndo" class="flex-1 btn-premium rounded-xl text-2xl" title="復原上一筆">↺ 撤銷</button>
+                <button id="btnClear" class="flex-1 btn-premium rounded-xl text-lg text-rose-600" title="清空畫布">✕ 清除</button>
+                <button id="btnBackspace" class="flex-1 btn-premium rounded-xl text-lg" title="退格刪除">⌫ 退格</button>
+                <button id="btnToggleSimp" class="flex-1 btn-premium rounded-xl text-lg tracking-wider">簡 ⇄ 繁</button>
+                <button id="btnCopy" class="flex-1 btn-premium rounded-xl text-lg tracking-wider text-blue-700" title="複製所有文字">📋 複製文字</button>
             </div>
         </div>
     </div>
-
     <script>
         const canvas = document.getElementById('drawCanvas');
         const ctx = canvas.getContext('2d');
         const textOutput = document.getElementById('textOutput');
         const charCandidates = document.getElementById('charCandidates');
         const phraseCandidates = document.getElementById('phraseCandidates');
-        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const statusDot = document.getElementById('statusDot');
 
         let isDrawing = false;
         let traces = [];
-        let currentTrace = [];
+        let currentTrace = null;
         let fetchTimeout = null;
         let isSimplifiedMode = false;
+        let lastSelectedChar = "";
 
-        // 初始化畫布尺寸
         function resizeCanvas() {
             const rect = canvas.parentElement.getBoundingClientRect();
             canvas.width = rect.width;
             canvas.height = rect.height;
             redrawCanvas();
         }
-
-        // 監聽視窗縮放
         window.addEventListener('resize', resizeCanvas);
-        setTimeout(resizeCanvas, 100);
+        setTimeout(resizeCanvas, 150);
 
-        // 取得滑鼠或觸控點的座標
         function getCoords(e) {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
+            const clientX = e.touches ? e.touches.clientX : e.clientX;
+            const clientY = e.touches ? e.touches.clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
-        // 畫布事件監聽 (支援滑鼠與手機觸控)
-        function startDrawing(e) {
-            isDrawing = true;
-            const { x, y } = getCoords(e);
-            ctx.lineWidth = 4;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = '#262a33';
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-
-            currentTrace = { x: [x], y: [] };
-            // Google API 需要包含時間戳記，或直接傳入遞增的虛擬時間陣列
-            currentTrace.t = [Date.now()]; 
-            currentTrace.y.push(y);
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            e.preventDefault();
-            const { x, y } = getCoords(e);
-            ctx.lineTo(x, y);
-            ctx.stroke();
-
-            currentTrace.x.push(x);
-            currentTrace.y.push(y);
-            currentTrace.t.push(Date.now());
-        }
-
-        function stopDrawing() {
-            if (!isDrawing) return;
-            isDrawing = false;
-            if (currentTrace.x && currentTrace.x.length > 0) {
-                traces.push(currentTrace);
+function startDrawing(e) {
+isDrawing = true;
+const { x, y } = getCoords(e);
+ctx.lineWidth = 4.5;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+ctx.strokeStyle = '#2e3440';
+ctx.beginPath();
+ctx.moveTo(x, y);
+currentTrace = { x: [Math.round(x)], y: [Math.round(y)], t: [0] };
 }
-currentTrace = [];
+function draw(e) {
+if (!isDrawing) return;
+if (e.touches) e.preventDefault();
+const { x, y } = getCoords(e);
+ctx.lineTo(x, y);
+ctx.stroke();
+const timeOffset = currentTrace.t.length * 15;
+currentTrace.x.push(Math.round(x));
+currentTrace.y.push(Math.round(y));
+currentTrace.t.push(timeOffset);
+}
+function stopDrawing() {
+if (!isDrawing) return;
+isDrawing = false;
+if (currentTrace && currentTrace.x.length > 0) {
+traces.push(currentTrace);
+}
+currentTrace = null;
 triggerRecognition();
 }
 canvas.addEventListener('mousedown', startDrawing);
@@ -218,13 +148,12 @@ canvas.addEventListener('mouseleave', stopDrawing);
 canvas.addEventListener('touchstart', startDrawing, { passive: false });
 canvas.addEventListener('touchmove', draw, { passive: false });
 canvas.addEventListener('touchend', stopDrawing);
-// 重新繪製所有筆跡
 function redrawCanvas() {
 ctx.clearRect(0, 0, canvas.width, canvas.height);
-ctx.lineWidth = 4;
+ctx.lineWidth = 4.5;
 ctx.lineCap = 'round';
 ctx.lineJoin = 'round';
-ctx.strokeStyle = '#262a33';
+ctx.strokeStyle = '#2e3440';
 traces.forEach(trace => {
 if (trace.x.length === 0) return;
 ctx.beginPath();
@@ -235,63 +164,66 @@ ctx.lineTo(trace.x[i], trace.y[i]);
 ctx.stroke();
 });
 }
-// 緩衝發送識別請求 (防抖動)
+function updateStatus(state, msg) {
+statusText.innerText = msg;
+statusDot.className = "w-2 h-2 rounded-full inline-block " + (state === 'loading' ? 'bg-amber-500 animate-pulse' : state === 'success' ? 'bg-green-500' : 'bg-gray-400');
+}
 function triggerRecognition() {
 clearTimeout(fetchTimeout);
 if (traces.length === 0) return;
-statusIndicator.innerText = "識別中...";
-statusIndicator.className = "absolute bottom-2 left-2 text-xs text-amber-600 bg-white/80 px-2 py-0.5 rounded shadow pointer-events-none";
-fetchTimeout = setTimeout(() => {
-fetchHandwriting();
-}, 400); // 停止書寫 400 毫秒後送出
+updateStatus('loading', 'AI 精密計算識別中...');
+fetchTimeout = setTimeout(() => { fetchHandwriting(); }, 350);
 }
-// 呼叫 Google Input Tools 免費手寫識別 API
 function fetchHandwriting() {
-// 重組 API 所需的筆跡資料格式
 const apiInk = traces.map(t => [t.x, t.y, t.t]);
-const requestBody = {
-app: "mobilesearch",
-itc: "zh-t-i0-handwrit", // 支援中文手寫 (多語系通用)
-device: "navigator.userAgent",
-ink: apiInk,
-language: "zh"
-};
-fetch('google.com', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify(requestBody)
-})
+const requestBody = { app: "mobilesearch", itc: "zh-t-i0-handwrit", device: "navigator.userAgent", ink: apiInk, language: "zh" };
+fetch('google.com', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) })
 .then(res => res.json())
 .then(data => {
-statusIndicator.innerText = "準備手寫...";
-statusIndicator.className = "absolute bottom-2 left-2 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded shadow pointer-events-none";
-if (data && data[0] === "SUCCESS") {
-const candidates = data[1][0][1];
-displayCandidates(candidates);
+updateStatus('success', '識別完成');
+if (data && data[0] === "SUCCESS" && data[1] && data[1][0] && data[1][0][1]) {
+displayCandidates(data[1][0][1]);
 }
 })
-.catch(err => {
-console.error("手寫識別失敗：", err);
-statusIndicator.innerText = "連線失敗，請重試";
-statusIndicator.className = "absolute bottom-2 left-2 text-xs text-red-600 bg-white/80 px-2 py-0.5 rounded shadow pointer-events-none";
-});
+.catch(err => { console.error(err); updateStatus('error', '雲端連線失敗，請檢查網路'); });
 }
-// 顯示字詞候選字
 function displayCandidates(list) {
 charCandidates.innerHTML = "";
 if (!list || list.length === 0) return;
-list.slice(0, 10).forEach(char => {
+list.slice(0, 12).forEach(char => {
 const item = document.createElement('div');
-item.className = "char-item w-full text-center py-2 border-b border-gray-200 cursor-pointer transition-colors select-none";
+item.className = "candidate-item w-full text-center py-2.5 cursor-pointer select-none font-bold";
 item.innerText = char;
-item.addEventListener('click', () => {
-insertText(char);
-clearCanvas();
-});
+item.style.fontSize = "1.75rem";
+item.addEventListener('click', () => { insertText(char); lastSelectedChar = char; fetchPhrases(char); clearCanvas(); });
 charCandidates.appendChild(item);
 });
 }
-// 插入文字到文字框中
+function fetchPhrases(char) {
+phraseCandidates.innerHTML = "";
+const script = document.createElement('script');
+script.src = https://google.com{encodeURIComponent(char)}&cb=handlePhraseResponse;
+document.body.appendChild(script);
+document.body.removeChild(script);
+}
+window.handlePhraseResponse = function(data) {
+if (data && data[0] === "SUCCESS" && data[1] && data[1][0] && data[1][0][1]) {
+const rawPhrases = data[1][0][1];
+const cleanPhrases = rawPhrases.filter(p => p.startsWith(lastSelectedChar) && p.length > 1).map(p => p.substring(lastSelectedChar.length));
+renderPhrases([...new Set(cleanPhrases)].slice(0, 15));
+}
+};
+function renderPhrases(phrases) {
+phraseCandidates.innerHTML = "";
+if (phrases.length === 0) { phraseCandidates.innerHTML = <div class="text-xs text-gray-400 text-center py-4">暫無關聯聯想詞</div>; return; }
+phrases.forEach(phrase => {
+const item = document.createElement('div');
+item.className = "phrase-item w-full text-left px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 cursor-pointer text-sm font-semibold hover:text-blue-600 transition-colors select-none truncate";
+item.innerText = "＋ " + phrase;
+item.addEventListener('click', () => { insertText(phrase); lastSelectedChar = phrase.slice(-1); fetchPhrases(lastSelectedChar); });
+phraseCandidates.appendChild(item);
+});
+}
 function insertText(text) {
 const start = textOutput.selectionStart;
 const end = textOutput.selectionEnd;
@@ -300,71 +232,32 @@ textOutput.value = currentVal.substring(0, start) + text + currentVal.substring(
 textOutput.focus();
 textOutput.selectionStart = textOutput.selectionEnd = start + text.length;
 }
-// 功能按鈕：復原上一筆 ↺
 document.getElementById('btnUndo').addEventListener('click', () => {
 if (traces.length > 0) {
 traces.pop();
 redrawCanvas();
-if (traces.length > 0) {
-triggerRecognition();
-} else {
-charCandidates.innerHTML = "";
-}
+if (traces.length > 0) { triggerRecognition(); } else { charCandidates.innerHTML = ""; }
 }
 });
-// 功能按鈕：清空畫布 X
-function clearCanvas() {
-traces = [];
-ctx.clearRect(0, 0, canvas.width, canvas.height);
-charCandidates.innerHTML = "";
-}
+function clearCanvas() { traces = []; ctx.clearRect(0, 0, canvas.width, canvas.height); charCandidates.innerHTML = ""; updateStatus('ready', '準備就緒'); }
 document.getElementById('btnClear').addEventListener('click', clearCanvas);
-// 功能按鈕：退格 ⌫
 document.getElementById('btnBackspace').addEventListener('click', () => {
 const start = textOutput.selectionStart;
 const end = textOutput.selectionEnd;
 const currentVal = textOutput.value;
-if (start === end && start > 0) {
-textOutput.value = currentVal.substring(0, start - 1) + currentVal.substring(end);
-textOutput.selectionStart = textOutput.selectionEnd = start - 1;
-} else {
-textOutput.value = currentVal.substring(0, start) + currentVal.substring(end);
-textOutput.selectionStart = textOutput.selectionEnd = start;
-}
-textOutput.focus();
+if (start === end && start > 0) { textOutput.value = currentVal.substring(0, start - 1) + currentVal.substring(end); textOutput.selectionStart = textOutput.selectionEnd = start - 1; }
+else { textOutput.value = currentVal.substring(0, start) + currentVal.substring(end); textOutput.selectionStart = textOutput.selectionEnd = start; }
+textOutput.focus(); phraseCandidates.innerHTML = "";
 });
-// 功能按鈕：複製文字
 document.getElementById('btnCopy').addEventListener('click', () => {
 if (!textOutput.value) return;
-textOutput.select();
-document.execCommand('copy');
-alert('文字已成功複製到剪貼簿！');
+navigator.clipboard.writeText(textOutput.value).then(() => { alert('✨ 所有文字已成功複製到您的剪貼簿！'); })
+.catch(err => { textOutput.select(); document.execCommand('copy'); alert('✨ 文字已成功複製！'); });
 });
-// 標點符號欄點擊事件
-document.querySelectorAll('.punct-btn').forEach(btn => {
-btn.addEventListener('click', () => {
-insertText(btn.innerText);
-});
-});
-// 功能按鈕：轉簡 / 轉繁 (已整合網頁載入的 OpenCC)
+document.querySelectorAll('.punct-btn').forEach(btn => { btn.addEventListener('click', () => { insertText(btn.innerText); }); });
 const btnToggleSimp = document.getElementById('btnToggleSimp');
 btnToggleSimp.addEventListener('click', () => {
-if (!textOutput.value) {
-isSimplifiedMode = !isSimplifiedMode;
-btnToggleSimp.innerText = isSimplifiedMode ? "轉繁" : "轉簡";
-return;
-}
-if (!isSimplifiedMode) {
-// 繁轉簡
-const converter = OpenCC.Converter({ from: 'tw', to: 'cn' });
-textOutput.value = converter(textOutput.value);
-isSimplifiedMode = true;
-btnToggleSimp.innerText = "轉繁";
-} else {
-// 簡轉繁
-const converter = OpenCC.Converter({ from: 'cn', to: 'tw' });
-textOutput.value = converter(textOutput.value);
-isSimplifiedMode = false;
-btnToggleSimp.innerText = "轉簡";
-}
+if (!textOutput.value) { isSimplifiedMode = !isSimplifiedMode; btnToggleSimp.innerText = isSimplifiedMode ? "繁 ⇄ 簡" : "簡 ⇄ 繁"; return; }
+if (!isSimplifiedMode) { const converter = OpenCC.Converter({ from: 'tw', to: 'cn' }); textOutput.value = converter(textOutput.value); isSimplifiedMode = true; btnToggleSimp.innerText = "繁 ⇄ 簡"; }
+else { const converter = OpenCC.Converter({ from: 'cn', to: 'tw' }); textOutput.value = converter(textOutput.value); isSimplifiedMode = false; btnToggleSimp.innerText = "簡 ⇄ 繁"; }
 });
