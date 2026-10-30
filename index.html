@@ -145,10 +145,55 @@
                 <span class="font-semibold text-white">GitHub Copilot</span>（程式碼建議）、
                 <span class="font-semibold text-white">Grok</span>（方案參考）。
                 <br>以上為開發輔助工具說明；實際手寫辨識仍由本網站程式設定的辨識服務執行。
+                <br>詞語候選來自<a class="text-[#f6d365] underline" href="https://www.moedict.tw/" target="_blank" rel="noopener noreferrer">萌典華語詞目索引</a>；首次使用需載入詞目索引。
                 <br>總共使用了 364957 個 Tokens。
             </p>
         </footer>
     </div>
+
+    <section id="adminVersionsPage" class="hidden fixed inset-0 z-50 bg-[#262a33] p-3 sm:p-6" aria-labelledby="adminVersionsTitle" aria-modal="true" role="dialog">
+        <div class="mx-auto flex h-full max-w-4xl flex-col overflow-hidden rounded-xl border border-gray-600 bg-[#3b4252] shadow-2xl">
+            <header class="retro-header-bg flex shrink-0 items-center justify-between px-5 py-4">
+                <div>
+                    <h1 id="adminVersionsTitle" class="text-xl font-bold text-white">KC 版本資料</h1>
+                    <p class="mt-1 text-xs text-gray-200">版本 4 有 A／B 版，版本 9 有 A／B／C 版，另有版本 10 和 11</p>
+                </div>
+                <button id="btnCloseAdminVersions" type="button" class="btn-metallic rounded px-4 py-2 text-sm">返回手寫頁</button>
+            </header>
+            <div class="min-h-0 flex-grow overflow-y-auto bg-[#eef2f7] p-3 sm:p-5">
+                <ol id="adminVersionList" class="grid gap-3 sm:grid-cols-2"></ol>
+            </div>
+        </div>
+    </section>
+
+    <section id="versionFourChoices" class="hidden fixed inset-0 z-[60] bg-black/60 p-4" aria-labelledby="versionFourTitle" aria-modal="true" role="dialog">
+        <div class="mx-auto mt-[20vh] max-w-md rounded-xl border border-gray-300 bg-white p-5 shadow-2xl">
+            <div class="flex items-center justify-between gap-3">
+                <h2 id="versionFourTitle" class="text-xl font-bold text-gray-800">版本四</h2>
+                <button id="btnCloseVersionFourChoices" type="button" class="btn-metallic rounded px-3 py-1.5 text-sm">返回</button>
+            </div>
+            <p class="mt-2 text-sm text-gray-600">請選擇要開啟的版本：</p>
+            <div class="mt-4 grid grid-cols-2 gap-3">
+                <a class="btn-metallic rounded p-4 text-center text-lg" href="code_artifact%20(4).html" target="_blank" rel="noopener noreferrer">A 版本</a>
+                <a class="btn-metallic rounded p-4 text-center text-lg" href="code_artifact%20(4b).html" target="_blank" rel="noopener noreferrer">B 版本</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="versionNineChoices" class="hidden fixed inset-0 z-[60] bg-black/60 p-4" aria-labelledby="versionNineTitle" aria-modal="true" role="dialog">
+        <div class="mx-auto mt-[20vh] max-w-md rounded-xl border border-gray-300 bg-white p-5 shadow-2xl">
+            <div class="flex items-center justify-between gap-3">
+                <h2 id="versionNineTitle" class="text-xl font-bold text-gray-800">版本九</h2>
+                <button id="btnCloseVersionNineChoices" type="button" class="btn-metallic rounded px-3 py-1.5 text-sm">返回</button>
+            </div>
+            <p class="mt-2 text-sm text-gray-600">請選擇要開啟的版本：</p>
+            <div class="mt-4 grid grid-cols-3 gap-3">
+                <a class="btn-metallic rounded p-4 text-center text-lg" href="code_artifact%20(9a).html" target="_blank" rel="noopener noreferrer">A 版本</a>
+                <a class="btn-metallic rounded p-4 text-center text-lg" href="code_artifact%20(9b).html" target="_blank" rel="noopener noreferrer">B 版本</a>
+                <a class="btn-metallic rounded p-4 text-center text-lg" href="code_artifact%20(9c).html" target="_blank" rel="noopener noreferrer">C 版本</a>
+            </div>
+        </div>
+    </section>
 
     <script>
         const canvas = document.getElementById('drawCanvas');
@@ -157,6 +202,105 @@
         const charCandidates = document.getElementById('charCandidates');
         const phraseCandidates = document.getElementById('phraseCandidates');
         const statusIndicator = document.getElementById('statusIndicator');
+        const adminVersionsPage = document.getElementById('adminVersionsPage');
+        const btnCloseAdminVersions = document.getElementById('btnCloseAdminVersions');
+        const adminVersionList = document.getElementById('adminVersionList');
+        const versionFourChoices = document.getElementById('versionFourChoices');
+        const btnCloseVersionFourChoices = document.getElementById('btnCloseVersionFourChoices');
+        const versionNineChoices = document.getElementById('versionNineChoices');
+        const btnCloseVersionNineChoices = document.getElementById('btnCloseVersionNineChoices');
+
+        for (let version = 1; version <= 11; version++) {
+            const item = document.createElement('li');
+            item.className = 'list-none';
+            if (version === 4) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'w-full rounded-lg border border-blue-300 bg-white p-4 text-left shadow-sm transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500';
+                const title = document.createElement('span');
+                title.className = 'block font-bold text-gray-800';
+                title.textContent = '版本 4';
+                const description = document.createElement('span');
+                description.className = 'mt-2 block text-sm text-blue-700';
+                description.textContent = '選擇 A 版本或 B 版本';
+                button.append(title, description);
+                button.addEventListener('click', () => versionFourChoices.classList.remove('hidden'));
+                item.appendChild(button);
+            } else if (version === 9) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'w-full rounded-lg border border-blue-300 bg-white p-4 text-left shadow-sm transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500';
+                const title = document.createElement('span');
+                title.className = 'block font-bold text-gray-800';
+                title.textContent = '版本 9';
+                const description = document.createElement('span');
+                description.className = 'mt-2 block text-sm text-blue-700';
+                description.textContent = '選擇 A、B 或 C 版本';
+                button.append(title, description);
+                button.addEventListener('click', () => versionNineChoices.classList.remove('hidden'));
+                item.appendChild(button);
+            } else if ([2, 3, 5, 6, 7, 8, 10, 11].includes(version)) {
+                item.className = 'list-none';
+                const link = document.createElement('a');
+                link.className = 'block rounded-lg border border-blue-300 bg-white p-4 text-left shadow-sm transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500';
+                link.href = `code_artifact%20(${version}).html`;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                const title = document.createElement('span');
+                title.className = 'block font-bold text-gray-800';
+                title.textContent = `版本 ${version}`;
+                const description = document.createElement('span');
+                description.className = 'mt-2 block text-sm text-blue-700';
+                description.textContent = `開啟版本 ${version}`;
+                link.append(title, description);
+                item.appendChild(link);
+            } else {
+                item.className = 'rounded-lg border border-gray-300 bg-white p-4 shadow-sm';
+                const title = document.createElement('h2');
+                title.className = 'font-bold text-gray-800';
+                title.textContent = `版本 ${version}`;
+                const description = document.createElement('p');
+                description.className = 'mt-2 text-sm text-gray-500';
+                description.textContent = '版本資料待提供';
+                item.append(title, description);
+            }
+            adminVersionList.appendChild(item);
+        }
+
+        function closeAdminVersionsPage() {
+            versionFourChoices.classList.add('hidden');
+            versionNineChoices.classList.add('hidden');
+            adminVersionsPage.classList.add('hidden');
+            textOutput.focus();
+        }
+
+        textOutput.addEventListener('keydown', event => {
+            if (event.key === 'Enter' && textOutput.value.trim().toLowerCase() === 'adminkc') {
+                event.preventDefault();
+                textOutput.value = '';
+                adminVersionsPage.classList.remove('hidden');
+                btnCloseAdminVersions.focus();
+            }
+        });
+
+        btnCloseAdminVersions.addEventListener('click', closeAdminVersionsPage);
+        btnCloseVersionFourChoices.addEventListener('click', () => {
+            versionFourChoices.classList.add('hidden');
+        });
+        btnCloseVersionNineChoices.addEventListener('click', () => {
+            versionNineChoices.classList.add('hidden');
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                if (!versionNineChoices.classList.contains('hidden')) {
+                    versionNineChoices.classList.add('hidden');
+                } else if (!versionFourChoices.classList.contains('hidden')) {
+                    versionFourChoices.classList.add('hidden');
+                } else if (!adminVersionsPage.classList.contains('hidden')) {
+                    closeAdminVersionsPage();
+                }
+            }
+        });
 
         let isDrawing = false;
         let traces = [];
@@ -167,6 +311,21 @@
         let currentRecognizedCandidates = [];
         let isSimplifiedMode = false;
         let lastInsertedText = '';
+        const preservedPhrases = ['張閃身步', '浪子踢球', '狗熊多梳毛'];
+        const inappropriatePhraseTerms = [
+            '只認錢不認人', '不認人', '貪污', '賄賂', '詐騙', '偷竊', '搶劫', '毒品', '吸毒',
+            '賭博', '色情', '淫亂', '性侵', '強姦', '性交', '殺人', '殺害', '自殺', '暴力',
+            '恐怖攻擊', '虐待', '血腥', '屠殺', '浪蕩', '黑道', '黑社會', '嫖娼', '賣淫',
+            '操你', '操他', '操你媽', '操他媽', '幹你', '幹他', '幹話', '幹你媽', '幹你娘',
+            '他媽', '你媽', '王八蛋', '混蛋', '白痴', '智障', '神經病', '狗屁', '放屁',
+            '屁話', '狗屎', '屎尿', '屌', '賤', '婊', '妓', '龜頭', '陰莖', '陰道'
+        ];
+        const inappropriateStandaloneTerms = ['操', '幹', '屌', '賤', '婊', '妓'];
+        const DICTIONARY_INDEX_URL = 'https://www.moedict.tw/api/index/a.json';
+        let dictionaryIndexPromise = null;
+        let dictionaryIndexWords = [];
+        let dictionaryIndexSet = null;
+        let dictionaryWordsByFirstChar = new Map();
 
         // OpenCC 全字庫防彈轉換器
         let converterTradToSimp = (text) => text;
@@ -336,21 +495,18 @@
                 if (requestId !== recognitionRequestId) return;
                 if (data?.[0] !== 'SUCCESS') throw new Error('辨識服務沒有回傳候選字');
 
-                const candidates = [...new Set((data[1] || []).flatMap(result => result?.[1] || []))];
-                const chineseCandidates = candidates.filter(candidate => /^[\u3400-\u9fff]+$/.test(candidate));
-                if (chineseCandidates.length === 0) throw new Error('沒有辨識到中文字，請寫完整一點再試');
-                currentRecognizedCandidates = chineseCandidates;
-                renderCharCandidates(chineseCandidates);
-                const singleCharacterCandidates = chineseCandidates.filter(candidate => [...candidate].length === 1);
-                const phraseBase = singleCharacterCandidates.find(candidate =>
-                    chineseCandidates.some(item => [...item].length > 1 && item.startsWith(candidate))
-                ) || singleCharacterCandidates[0] || [...chineseCandidates[0]][0];
-                const initialPhrases = chineseCandidates.filter(candidate =>
-                    [...candidate].length > 1 && candidate.startsWith(phraseBase) && [...candidate].length <= 6
+                const candidates = [...new Set((data[1] || []).flatMap(result => result?.[1] || []))]
+                    .filter(candidate => typeof candidate === 'string' && isChineseWord(candidate));
+                if (candidates.length === 0) throw new Error('沒有辨識到中文字，請再寫一次');
+                currentRecognizedCandidates = candidates;
+                const singleCharacterCandidates = candidates.filter(candidate => getWordLength(candidate) === 1);
+                renderCharCandidates(singleCharacterCandidates);
+                const phraseBase = singleCharacterCandidates[0] || [...candidates[0]][0];
+                const recognizedPhrases = candidates.filter(candidate =>
+                    candidate.startsWith(phraseBase) && getWordLength(candidate) > 1 && getWordLength(candidate) <= 6
                 );
-                renderPhraseCandidates(initialPhrases, phraseBase);
-                fetchPhrases(phraseBase, initialPhrases);
-                statusIndicator.textContent = '辨識完成，請選擇候選字';
+                fetchDictionaryPhrases(phraseBase, recognizedPhrases);
+                statusIndicator.textContent = '辨識完成，請選擇候選字或字典詞語';
                 statusIndicator.className = 'absolute bottom-2 left-2 text-xs text-green-700 font-bold bg-white/90 px-2 py-0.5 rounded shadow pointer-events-none transition-colors duration-200';
             } catch (error) {
                 if (requestId !== recognitionRequestId) return;
@@ -362,97 +518,210 @@
 
         function renderCharCandidates(chars) {
             charCandidates.innerHTML = '';
-            if(!chars || chars.length === 0) return;
+            if (!chars || chars.length === 0) {
+                charCandidates.innerHTML = '<div class="text-xs text-gray-400 p-1 text-center">無單字候選</div>';
+                return;
+            }
 
-            const uniqueChars = [...new Set(chars)].filter(char => /^[\u3400-\u9fff]$/.test(char));
+            const uniqueChars = [...new Set(chars)].filter(char =>
+                typeof char === 'string' &&
+                getWordLength(char) === 1 &&
+                isAppropriatePhrase(char)
+            );
             
             uniqueChars.slice(0, 10).forEach((char) => {
                 const finalChar = convertText(char);
                 const div = document.createElement('div');
                 div.className = 'char-item w-full text-center py-2 cursor-pointer transition-colors border-b border-gray-200 hover:bg-blue-100 font-bold text-[#1e293b]';
                 div.textContent = finalChar;
+                div.title = '選擇此字，查詢字典收錄詞語';
                 
                 div.onclick = () => {
                     insertText(finalChar);
                     lastInsertedText = finalChar;
                     clearCanvas();
                     const relatedCandidates = currentRecognizedCandidates.filter(candidate =>
-                        candidate.startsWith(char) && candidate.length >= 2 && candidate.length <= 6
+                        candidate.startsWith(char) &&
+                        getWordLength(candidate) > 1 &&
+                        getWordLength(candidate) <= 6
                     );
-                    renderPhraseCandidates(relatedCandidates, char);
-                    fetchPhrases(char, relatedCandidates);
+                    fetchDictionaryPhrases(char, relatedCandidates);
                 };
                 charCandidates.appendChild(div);
             });
         }
 
-        function fetchPhrases(baseCharOriginal, fallbackPhrases = []) {
+        function isChineseWord(word) {
+            return typeof word === 'string' &&
+                /^[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]+$/.test(word);
+        }
+
+        function getWordLength(word) {
+            return [...word].length;
+        }
+
+        function isAppropriatePhrase(word) {
+            return isChineseWord(word) &&
+                !(getWordLength(word) === 1 && inappropriateStandaloneTerms.includes(word)) &&
+                !inappropriatePhraseTerms.some(term => word.includes(term));
+        }
+
+        async function loadDictionaryIndex() {
+            if (!dictionaryIndexPromise) {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 20000);
+                dictionaryIndexPromise = fetch(DICTIONARY_INDEX_URL, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    signal: controller.signal,
+                    cache: 'force-cache'
+                })
+                    .then(async response => {
+                        if (!response.ok) throw new Error(`萌典詞目索引載入失敗（HTTP ${response.status}）`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        const entries = Array.isArray(data) ? data :
+                            Array.isArray(data?.terms) ? data.terms :
+                            Array.isArray(data?.words) ? data.words :
+                            Array.isArray(data?.entries) ? data.entries : null;
+                        if (!entries) throw new Error('萌典回傳的詞目索引格式不正確');
+
+                        dictionaryIndexWords = [...new Set(entries.filter(word => {
+                            if (!isAppropriatePhrase(word)) return false;
+                            const length = getWordLength(word);
+                            return length >= 2 && length <= 6;
+                        }))];
+                        if (dictionaryIndexWords.length === 0) {
+                            throw new Error('萌典詞目索引沒有可用的中文詞語');
+                        }
+
+                        dictionaryIndexSet = new Set(dictionaryIndexWords);
+                        dictionaryWordsByFirstChar = new Map();
+                        for (const word of dictionaryIndexWords) {
+                            const firstChar = [...word][0];
+                            if (!dictionaryWordsByFirstChar.has(firstChar)) {
+                                dictionaryWordsByFirstChar.set(firstChar, []);
+                            }
+                            dictionaryWordsByFirstChar.get(firstChar).push(word);
+                        }
+                        return dictionaryIndexWords;
+                    })
+                    .catch(error => {
+                        dictionaryIndexPromise = null;
+                        throw error;
+                    })
+                    .finally(() => clearTimeout(timeout));
+            }
+            return dictionaryIndexPromise;
+        }
+
+        async function fetchDictionaryPhrases(baseCharOriginal, recognizedPhrases = []) {
             if (!baseCharOriginal) return;
             const requestId = ++phraseRequestId;
-            const callbackName = `phraseCallback_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
-            const script = document.createElement('script');
-            let finished = false;
+            const baseChar = [...baseCharOriginal][0];
+            phraseCandidates.innerHTML = '<div class="text-xs text-gray-400 p-2 text-center">正在載入萌典詞語索引（首次載入可能較久）...</div>';
 
-            const cleanup = () => {
-                if (finished) return;
-                finished = true;
-                clearTimeout(timeout);
-                delete window[callbackName];
-                script.remove();
-            };
-
-            const timeout = setTimeout(() => {
-                cleanup();
-                if (requestId === phraseRequestId) renderPhraseCandidates(fallbackPhrases, baseCharOriginal);
-            }, 4000);
-
-            window[callbackName] = (data) => {
-                cleanup();
+            try {
+                const allWords = await loadDictionaryIndex();
                 if (requestId !== phraseRequestId) return;
-                const phrases = Array.isArray(data?.[1])
-                    ? data[1].map(item => Array.isArray(item) ? item[0] : item)
-                    : [];
-                renderPhraseCandidates([...fallbackPhrases, ...phrases], baseCharOriginal);
-            };
-            script.onerror = () => {
-                cleanup();
-                if (requestId === phraseRequestId) renderPhraseCandidates(fallbackPhrases, baseCharOriginal);
-            };
-            script.src = `https://suggestqueries.google.com/complete/search?client=chrome&hl=zh-TW&gl=tw&q=${encodeURIComponent(baseCharOriginal)}&callback=${callbackName}`;
-            document.body.appendChild(script);
+
+                const results = [];
+                const seen = new Set();
+                const addWord = (word, source, allowNonDictionary = false) => {
+                    if (!isAppropriatePhrase(word)) return;
+                    const length = getWordLength(word);
+                    if (length < 2 || length > 6 || seen.has(word)) return;
+                    if (!allowNonDictionary && !dictionaryIndexSet.has(word)) return;
+                    seen.add(word);
+                    results.push({ word, source });
+                };
+
+                for (const word of recognizedPhrases) {
+                    if (word.startsWith(baseChar)) addWord(word, '手寫辨識候選／字典收錄');
+                }
+                for (const word of currentRecognizedCandidates) {
+                    if (word.startsWith(baseChar)) addWord(word, '手寫辨識候選／字典收錄');
+                }
+                for (const phrase of preservedPhrases) {
+                    if (phrase.startsWith(baseChar)) addWord(phrase, '保留詞語', true);
+                }
+
+                const prefixWords = dictionaryWordsByFirstChar.get(baseChar) || [];
+                const orderedPrefixWords = prefixWords
+                    .map((word, index) => ({ word, index, length: getWordLength(word) }))
+                    .sort((a, b) => a.length - b.length || a.index - b.index);
+                for (const item of orderedPrefixWords) {
+                    addWord(item.word, '萌典字典詞目');
+                }
+
+                if (results.length < 10) {
+                    for (const word of allWords) {
+                        if (!word.startsWith(baseChar) && word.includes(baseChar)) {
+                            addWord(word, '萌典字典相關詞目');
+                        }
+                    }
+                }
+
+                if (requestId !== phraseRequestId) return;
+                renderPhraseCandidates(results, baseChar);
+                phraseCandidates.dataset.resultCount = String(results.length);
+            } catch (error) {
+                if (requestId !== phraseRequestId) return;
+                console.error('萌典詞目索引載入失敗:', error);
+                phraseCandidates.textContent = '';
+                const message = document.createElement('div');
+                message.className = 'text-xs text-red-500 p-2 text-center';
+                message.textContent = `${error.message || '字典詞語載入失敗'} `;
+                const retryButton = document.createElement('button');
+                retryButton.id = 'btnRetryDictionary';
+                retryButton.className = 'mt-2 underline text-blue-700';
+                retryButton.textContent = '重新載入字典詞語';
+                retryButton.onclick = () => {
+                    dictionaryIndexPromise = null;
+                    fetchDictionaryPhrases(baseChar, recognizedPhrases);
+                };
+                message.appendChild(document.createElement('br'));
+                message.appendChild(retryButton);
+                phraseCandidates.appendChild(message);
+            }
         }
 
         function renderPhraseCandidates(phrases, baseCharOriginal) {
             phraseCandidates.innerHTML = '';
             const labels = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
-            
-            const filteredPhrases = [...new Set((phrases || []).filter(p =>
-                typeof p === 'string' && p.startsWith(baseCharOriginal) && p.length >= 2 && p.length <= 6
-            ))];
-            
-            if (filteredPhrases.length === 0) {
-                phraseCandidates.innerHTML = '<div class="text-xs text-gray-400 p-2 text-center">無相關詞語</div>';
+            const uniqueEntries = [...new Map((phrases || []).map(item => {
+                const entry = typeof item === 'string' ? { word: item, source: '萌典字典詞目' } : item;
+                return [entry.word, entry];
+            }).filter(([word]) =>
+                isAppropriatePhrase(word) &&
+                getWordLength(word) >= 2 &&
+                getWordLength(word) <= 6
+            )).values()];
+
+            if (uniqueEntries.length === 0) {
+                phraseCandidates.innerHTML = '<div class="text-xs text-gray-400 p-2 text-center">字典中暫無相關詞語</div>';
                 return;
             }
 
-            filteredPhrases.slice(0, 10).forEach((phrase, index) => {
+            uniqueEntries.slice(0, 30).forEach((entry, index) => {
+                const phrase = entry.word;
                 const finalPhrase = convertText(phrase);
                 const finalBaseChar = convertText(baseCharOriginal);
-                
                 const div = document.createElement('div');
                 div.className = 'phrase-item w-full py-1.5 px-3 cursor-pointer transition-colors flex items-center border-b border-gray-100 hover:bg-gray-100';
-                
+                div.title = `${entry.source || '萌典字典詞目'}：${phrase}`;
+
                 const label = document.createElement('span');
-                label.className = 'text-gray-400 text-xs mr-3 font-sans w-3 text-right font-bold';
-                label.textContent = labels[index];
-                
+                label.className = 'text-gray-400 text-xs mr-3 font-sans w-3 text-right font-bold shrink-0';
+                label.textContent = index < labels.length ? labels[index] : '';
+
                 const text = document.createElement('span');
                 text.className = 'font-serif text-lg text-gray-800 font-bold tracking-wide';
                 text.textContent = finalPhrase;
-                
+
                 div.appendChild(label);
                 div.appendChild(text);
-                
                 div.onclick = () => {
                     const currentVal = textOutput.value;
                     if (currentVal.endsWith(finalBaseChar) && lastInsertedText === finalBaseChar) {
